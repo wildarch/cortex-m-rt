@@ -284,7 +284,6 @@
 #![deny(warnings)]
 #![feature(asm)]
 #![feature(compiler_builtins_lib)]
-#![feature(global_asm)]
 #![feature(lang_items)]
 #![feature(linkage)]
 #![feature(naked_functions)]
@@ -374,42 +373,88 @@ unsafe extern "C" fn reset_handler() -> ! {
 }
 
 #[cfg(target_arch = "arm")]
-global_asm!(r#"
-.weak NMI
-NMI = DEFAULT_HANDLER
-
-.weak HARD_FAULT
-HARD_FAULT = DEFAULT_HANDLER
-
-.weak MEM_MANAGE
-MEM_MANAGE = DEFAULT_HANDLER
-
-.weak BUS_FAULT
-BUS_FAULT = DEFAULT_HANDLER
-
-.weak USAGE_FAULT
-USAGE_FAULT = DEFAULT_HANDLER
-
-.weak SVCALL
-SVCALL = DEFAULT_HANDLER
-
-.weak PENDSV
-PENDSV = DEFAULT_HANDLER
-
-.weak SYS_TICK
-SYS_TICK = DEFAULT_HANDLER
-"#);
+extern "C" {
+    fn DEFAULT_HANDLER() -> !;
+}
 
 #[cfg(target_arch = "arm")]
-extern "C" {
-    fn NMI();
-    fn HARD_FAULT();
-    fn MEM_MANAGE();
-    fn BUS_FAULT();
-    fn USAGE_FAULT();
-    fn SVCALL();
-    fn PENDSV();
-    fn SYS_TICK();
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn NMI() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn HARD_FAULT() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn MEM_MANAGE() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn BUS_FAULT() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn USAGE_FAULT() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn SVCALL() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn PENDSV() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
+}
+
+#[cfg(target_arch = "arm")]
+#[linkage = "weak"]
+#[naked]
+#[no_mangle]
+extern "C" fn SYS_TICK() {
+    unsafe {
+        DEFAULT_HANDLER()
+    }
 }
 
 #[allow(private_no_mangle_statics)]
