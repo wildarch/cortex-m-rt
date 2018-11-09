@@ -412,6 +412,13 @@ pub fn exception(args: TokenStream, input: TokenStream) -> TokenStream {
             .into()
         }
         Exception::Other => {
+            let is_exc_return = match f.decl.output {
+                ReturnType::Type(_, ref ty) => match **ty {
+                    Type::Path(_) => true,
+                    _ => false,
+                },
+                _ => false,
+            };
             let valid_signature = f.constness.is_none()
                 && f.vis == Visibility::Inherited
                 && f.abi.is_none()
@@ -424,6 +431,13 @@ pub fn exception(args: TokenStream, input: TokenStream) -> TokenStream {
                     ReturnType::Type(_, ref ty) => match **ty {
                         Type::Tuple(ref tuple) => tuple.elems.is_empty(),
                         Type::Never(..) => true,
+                        Type::Path(ref path) => {
+                            let type_name = path.path.segments.last();
+                            match type_name {
+                                Some(type_name) => type_name.value().ident == "ExceptionReturn",
+                                None => false,
+                            }
+                        }
                         _ => false,
                     },
                 };
@@ -463,21 +477,48 @@ pub fn exception(args: TokenStream, input: TokenStream) -> TokenStream {
                 })
                 .collect::<Vec<_>>();
 
-            quote!(
-                #[export_name = #ident_s]
-                #(#attrs)*
-                pub #unsafety extern "C" fn #hash() {
-                    extern crate cortex_m_rt;
+            if is_exc_return {
+                let ret_val = f.decl.output;
+                let trampoline_hash = random_ident();
+                let asm = format!("bl {}\n\rbx r0\n\r", hash);
+                quote!(
+                    #[naked]
+                    #[export_name = #ident_s]
+                    pub unsafe extern "C" fn #trampoline_hash() {
+                        asm!(#asm);
+                    }
 
-                    // check that this exception actually exists
-                    cortex_m_rt::Exception::#ident;
+                    #(#attrs)*
+                    #[no_mangle]
+                    pub #unsafety extern "C" fn #hash() #ret_val {
+                        extern crate cortex_m_rt;
 
-                    #(#vars)*
+                        // check that this exception actually exists
+                        cortex_m_rt::Exception::#ident;
 
-                    #(#stmts)*
-                }
-            )
-            .into()
+                        #(#vars)*
+
+                        #(#stmts)*
+                    }
+                )
+                .into()
+            } else {
+                quote!(
+                    #[export_name = #ident_s]
+                    #(#attrs)*
+                    pub #unsafety extern "C" fn #hash() {
+                        extern crate cortex_m_rt;
+
+                        // check that this exception actually exists
+                        cortex_m_rt::Exception::#ident;
+
+                        #(#vars)*
+
+                        #(#stmts)*
+                    }
+                )
+                .into()
+            }
         }
     }
 }

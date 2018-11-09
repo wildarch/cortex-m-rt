@@ -705,3 +705,33 @@ pub static __INTERRUPTS: [unsafe extern "C" fn(); 32] = [{
 
     DefaultHandler
 }; 32];
+
+/// Exception Return code for Exception entry and return.
+///
+/// See also: [Cortex-M4 Devices Generic User Guide - 2.3.7. Exception entry and return](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0553a/Babefdjc.html).
+#[repr(u32)]
+pub enum ExceptionReturn {
+    /// Return to Handler mode, exception return uses non-floating-point state from the MSP
+    /// and execution uses MSP after return.
+    HandlerMsp = 0xFFFFFFF1,
+
+    /// Return to Thread mode, exception return uses non-floating-point state from the MSP
+    /// and execution uses MSP after return.
+    ThreadMsp = 0xFFFFFFF9,
+
+    /// Return to Thread mode, exception return uses non-floating-point state from the PSP
+    /// and execution uses PSP after return.
+    ThreadPsp = 0xFFFFFFFD,
+
+    /// Return to Handler mode, exception return uses floating-point-state from MSP and execution
+    /// uses MSP after return.
+    HandlerFpuMsp = 0xFFFFFFE1,
+
+    /// Return to Thread mode, exception return uses floating-point-state from MSP and execution
+    /// uses MSP after return.
+    ThreadFpuMsp = 0xFFFFFFE9,
+
+    /// Return to Thread mode, exception return uses floating-point-state from PSP and execution
+    /// uses PSP after return.
+    ThreadFpuPsp = 0xFFFFFFED,
+}
